@@ -37,6 +37,81 @@ app.get("/students", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+// =======================
+// COURSES ROUTES
+// =======================
+
+// GET all courses
+app.get("/courses", async (req, res) => {
+  try {
+    const courses = await db.collection("courses").find().toArray();
+    res.status(200).json(courses);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+const { ObjectId } = require("mongodb");
+
+// GET course by ID
+app.get("/courses/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ error: "Invalid course ID" });
+    }
+
+    const course = await db
+      .collection("courses")
+      .findOne({ _id: new ObjectId(id) });
+
+    if (!course) {
+      return res.status(404).json({ error: "Course not found" });
+    }
+
+    res.status(200).json(course);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST create new course
+app.post("/courses", async (req, res) => {
+  try {
+    const course = {
+      name: req.body.name,
+      code: req.body.code,
+      instructor: req.body.instructor,
+      credits: req.body.credits,
+      semester: req.body.semester,
+      department: req.body.department,
+      year: req.body.year
+    };
+
+    // Validation: all fields required
+    if (
+      !course.name ||
+      !course.code ||
+      !course.instructor ||
+      !course.credits ||
+      !course.semester ||
+      !course.department ||
+      !course.year
+    ) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    const result = await db.collection("courses").insertOne(course);
+
+    res.status(201).json({
+      message: "Course created",
+      id: result.insertedId
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // POST create new student
 app.post("/students", async (req, res) => {
   try {
